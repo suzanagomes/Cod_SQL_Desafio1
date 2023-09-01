@@ -1,0 +1,257 @@
+-- Criação do banco de dados para um E-commerce - 
+-- Esta seção cria um banco de dados para armazenar informações de um sistema de e-commerce.
+
+-- DROP DATABASE IF EXISTS ecommerce;
+-- Verifica se um banco de dados chamado "ecommerce" já existe e, se existir, exclui-o.
+
+CREATE DATABASE IF NOT EXISTS ecommerce;
+-- Cria um novo banco de dados chamado "ecommerce" se ele ainda não existir.
+
+USE ecommerce;
+-- Seleciona o banco de dados "ecommerce" para uso.
+
+-- Tabela de Produtos
+-- Esta tabela contém detalhes sobre os produtos disponíveis no e-commerce.
+
+CREATE TABLE produtos (
+    idProduto INT AUTO_INCREMENT PRIMARY KEY,
+    nomeProduto VARCHAR(100) NOT NULL,
+    categoria ENUM('Eletrônico', 'Vestimenta', 'Brinquedos', 'Alimentos', 'Móveis') NOT NULL,
+    descricao TEXT,
+    valor DECIMAL(10, 2) NOT NULL,
+    avaliacao DECIMAL(3, 2) NOT NULL DEFAULT 0
+);
+
+-- Tabela de Fornecedores
+-- Esta tabela armazena informações sobre os fornecedores dos produtos.
+
+CREATE TABLE fornecedores (
+    idFornecedor INT AUTO_INCREMENT PRIMARY KEY,
+    cnpj CHAR(14) NOT NULL UNIQUE,
+    razaoSocial VARCHAR(100) NOT NULL,
+    contato CHAR(11) NOT NULL
+);
+
+-- Tabela de Vendedores
+-- Esta tabela registra informações sobre os vendedores.
+
+CREATE TABLE vendedores (
+    idVendedor INT AUTO_INCREMENT PRIMARY KEY,
+    razaoSocial VARCHAR(100) NOT NULL,
+    cnpj CHAR(14) UNIQUE,
+    cpf CHAR(11) UNIQUE,
+    localidade VARCHAR(50),
+    nomeFantasia VARCHAR(100)
+);
+
+-- Tabela de Estoque
+-- Esta tabela mantém o controle do estoque de produtos.
+
+CREATE TABLE estoqueProdutos (
+    idProduto INT,
+    quantidade INT DEFAULT 0,
+    localidade VARCHAR(50),
+    PRIMARY KEY (idProduto, localidade),
+    FOREIGN KEY (idProduto) REFERENCES produtos(idProduto)
+);
+
+-- Tabela de Clientes
+-- Esta tabela armazena informações sobre os clientes do e-commerce.
+
+CREATE TABLE clientes (
+    idCliente INT AUTO_INCREMENT PRIMARY KEY,
+    tipoCliente ENUM('Pessoa Física', 'Pessoa Jurídica') NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    cpf_cnpj CHAR(14) NOT NULL UNIQUE,
+    endereco VARCHAR(255),
+    dataNascimento DATE
+);
+
+-- Tabela de Pedidos
+-- Esta tabela registra informações sobre os pedidos feitos pelos clientes.
+
+CREATE TABLE pedidos (
+    idPedido INT AUTO_INCREMENT PRIMARY KEY,
+    idCliente INT,
+    statusPedido ENUM('Em andamento', 'Em processamento', 'Enviado', 'Entregue') DEFAULT 'Em andamento',
+    descricao TEXT,
+    frete DECIMAL(10, 2) DEFAULT 10,
+    pagamento BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (idCliente) REFERENCES clientes(idCliente)
+);
+
+-- Tabela de Entrega
+-- Esta tabela registra informações sobre as entregas dos pedidos.
+
+CREATE TABLE entregas (
+    idEntrega INT AUTO_INCREMENT PRIMARY KEY,
+    idPedido INT,
+    statusEntrega ENUM('Em trânsito', 'Entregue') NOT NULL,
+    codigoRastreio VARCHAR(50) NOT NULL,
+    FOREIGN KEY (idPedido) REFERENCES pedidos(idPedido)
+);
+
+-- Tabela de Pagamentos 
+-- Esta tabela armazena informações sobre as formas de pagamento cadastradas pelos clientes.
+
+CREATE TABLE pagamentos (
+    idPagamento INT AUTO_INCREMENT PRIMARY KEY,
+    idCliente INT,
+    formaPagamento VARCHAR(50) NOT NULL,
+    FOREIGN KEY (idCliente) REFERENCES clientes(idCliente)
+);
+
+-- Tabela de Produtos Vendidos por Vendedor
+-- Esta tabela estabelece uma relação entre produtos e vendedores.
+
+CREATE TABLE produtosVendedores (
+    idProduto INT,
+    idVendedor INT,
+    quantidade INT DEFAULT 1,
+    PRIMARY KEY (idProduto, idVendedor),
+    FOREIGN KEY (idProduto) REFERENCES produtos(idProduto),
+    FOREIGN KEY (idVendedor) REFERENCES vendedores(idVendedor)
+);
+
+-- Tabela de Produtos em Pedidos
+-- Esta tabela relaciona produtos e pedidos.
+
+CREATE TABLE produtosPedidos (
+    idProduto INT,
+    idPedido INT,
+    quantidade INT DEFAULT 1,
+    statusPedido ENUM('Disponível', 'Sem estoque') DEFAULT 'Disponível',
+    PRIMARY KEY (idProduto, idPedido),
+    FOREIGN KEY (idProduto) REFERENCES produtos(idProduto),
+    FOREIGN KEY (idPedido) REFERENCES pedidos(idPedido)
+);
+
+-- Tabela de Produtos Fornecidos por Fornecedor
+-- Esta tabela estabelece uma relação entre produtos e fornecedores.
+
+CREATE TABLE produtosFornecedores (
+    idProduto INT,
+    idFornecedor INT,
+    quantidade INT NOT NULL,
+    PRIMARY KEY (idProduto, idFornecedor),
+    FOREIGN KEY (idProduto) REFERENCES produtos(idProduto),
+    FOREIGN KEY (idFornecedor) REFERENCES fornecedores(idFornecedor)
+);
+----------------------------------------------------------------------
+
+-- Supondo que esses são alguns clientes fictícios
+INSERT INTO clientes (tipoCliente, nome, cpf_cnpj, endereco, dataNascimento) VALUES
+('Pessoa Física', 'Kurt Cobain', '12345678900', 'Rua Nirvana, 123', '1967-02-20'),
+('Pessoa Física', 'Amy Lee', '98765432100', 'Avenida Evanescence, 789', '1981-12-13'),
+('Pessoa Física', 'Dave Grohl', '11122233344', 'Rua Foo Fighters, 101', '1969-01-14'),
+('Pessoa Física', 'Chester Bennington', '98765432101', 'Avenida Linkin Park, 987', '1976-03-20'),
+('Pessoa Física', 'Billie Joe Armstrong', '11122233345', 'Rua Green Day, 202', '1972-02-17'),
+('Pessoa Física', 'Thom Yorke', '99988877767', 'Avenida Radiohead, 505', '1968-10-07'),
+('Pessoa Física', 'Eddie Vedder', '12345678902', 'Rua Pearl Jam, 606', '1964-12-23'),
+('Pessoa Física', 'Brandon Flowers', '98765432102', 'Avenida The Killers, 707', '1981-06-21'),
+('Pessoa Física', 'Julian Casablancas', '11122233346', 'Rua The Strokes, 808', '1978-08-23'),
+('Pessoa Física', 'Chris Martin', '55566677790', 'Rua Coldplay, 909', '1977-03-02'),
+
+
+
+-- Supondo que esses são os métodos de pagamento para os cinco clientes fictícios.
+INSERT INTO pagamentos (idCliente, formaPagamento) VALUES
+(6, 'Cartão de Crédito'),
+(3, 'Boleto Bancário'),
+(1, 'Transferência Bancária'),
+(2, 'Cartão de Débito'),
+(4, 'PayPal'),
+(5, 'Transferência Bancária'),
+(1, 'Boleto Bancário'),
+(2, 'Cartão de Crédito'),
+(3, 'Cartão de Débito'),
+(6, 'PayPal');
+
+
+
+-- Supondo que esses são os dados de entrega para alguns pedidos fictícios.
+INSERT INTO entregas (idPedido, statusEntrega, codigoRastreio) VALUES
+(6, 'Entregue', 'KL444555666'),
+(3, 'Em trânsito', 'MN777888999'),
+(1, 'Entregue', 'OP222333444'),
+(2, 'Em trânsito', 'QR555666777'),
+(4, 'Entregue', 'ST888999000'),
+(5, 'Em trânsito', 'UV111222333'),
+(1, 'Entregue', 'WX444555666'),
+(2, 'Em trânsito', 'YZ777888999'),
+(3, 'Entregue', 'AA222333444'),
+(4, 'Em trânsito', 'BB555666777');
+
+
+-- Supondo que esses são alguns produtos fictícios disponíveis.
+INSERT INTO produtos (nomeProduto, categoria, descricao, valor, avaliacao) VALUES
+('Fone de Ouvido Bluetooth', 'Eletrônicos', 'Fone de ouvido sem fio com tecnologia Bluetooth', 79.99, 4.5),
+('Vestido Floral', 'Vestuário', 'Vestido estampado com padrão floral', 49.99, 4.2),
+('Quebra-Cabeça de 1000 peças', 'Brinquedos', 'Quebra-cabeça desafiador com 1000 peças', 15.99, 4.6),
+('Feijão Preto', 'Alimentos', 'Feijão preto de excelente qualidade', 3.99, 4.7),
+('Mesa de Jantar em Madeira', 'Móveis', 'Mesa de jantar robusta feita de madeira maciça', 299.99, 4.0),
+('Fogão a Gás', 'Eletrodomésticos', 'Fogão a gás com quatro bocas e forno', 249.99, 4.3),
+('Livro de Ficção Científica', 'Livros', 'Livro emocionante de ficção científica', 12.99, 4.4),
+('Bicicleta Mountain Bike', 'Esportes', 'Bicicleta de montanha resistente para trilhas', 499.99, 4.8),
+('Máquina de Lavar Roupa', 'Eletrodomésticos', 'Máquina de lavar roupa com capacidade de 10 kg', 399.99, 4.1),
+('Tênis Esportivo', 'Calçados', 'Tênis esportivo confortável para corridas', 69.99, 4.7);
+
+
+-- Supondo que esses são alguns pedidos fictícios relacionados aos clientes fictícios.
+INSERT INTO pedidos (idCliente, statusPedido, descricao, frete, pagamento) VALUES
+(1, 'Entregue', 'Pedido entregue com sucesso', 10.00, TRUE),
+(2, 'Em andamento', 'Aguardando confirmação de pagamento', 10.00, FALSE),
+(3, 'Em processamento', 'Pedido em processo de preparação', 15.00, TRUE),
+(4, 'Entregue', 'Pedido entregue com sucesso', 10.00, TRUE),
+(5, 'Enviado', 'Pedido enviado para entrega', 12.00, TRUE),
+(1, 'Em andamento', 'Aguardando separação dos produtos', 8.00, TRUE),
+(2, 'Cancelado', 'Pedido cancelado a pedido do cliente', 0.00, TRUE),
+(3, 'Enviado', 'Pedido enviado para entrega', 15.00, TRUE),
+(4, 'Em andamento', 'Produtos em processo de embalagem', 10.00, TRUE),
+(5, 'Entregue', 'Pedido entregue com sucesso', 12.00, TRUE);
+
+
+-- Supondo que esses são alguns dados de estoque fictícios para produtos.
+
+INSERT INTO estoqueProdutos (idProduto, quantidade, localidade) VALUES
+(1, 50, 'Centro de Distribuição A'),
+(2, 30, 'Centro de Distribuição D'),
+(3, 30, 'Centro de Distribuição A'),
+(4, 100, 'Centro de Distribuição C'),
+(5, 60, 'Centro de Distribuição B'),
+(1, 25, 'Loja Filial 1'),
+(2, 70, 'Loja Matriz'),
+(3, 15, 'Loja Filial 2'),
+(4, 40, 'Loja Filial 3'),
+(5, 55, 'Loja Matriz');
+
+
+
+-- Supondo que esses são alguns fornecedores fictícios.
+INSERT INTO fornecedores (cnpj, razaoSocial, contato) VALUES
+('12345678900', 'Fornecedor A', 'ABOUBAKAR'),
+('98765432100', 'Fornecedor B', 'JESSICA'),
+('11122233344', 'Fornecedor C', 'MICHAEL'),
+('55566677788', 'Fornecedor D', 'OLIVIA'),
+('99988877766', 'Fornecedor E', 'LUCAS'),
+('44433322211', 'Fornecedor F', 'EMILY'),
+('88877766655', 'Fornecedor G', 'LIAM'),
+('66655544433', 'Fornecedor H', 'AVA'),
+('33344455566', 'Fornecedor I', 'NOAH'),
+('77788899900', 'Fornecedor J', 'ISABELLA');
+
+-- Supondo que esses são alguns vendedores fictícios
+INSERT INTO vendedores (razaoSocial, cnpj, cpf, localidade, nomeFantasia)
+VALUES
+    ('Vendamax Comércio', '12345678900001', NULL, 'São Paulo', 'Vendamax SP'),
+    ('Nova Comercial', NULL, '98765432100', 'Rio de Janeiro', 'Nova RJ'),
+    ('Top Vendas Ltda.', '11122233300001', NULL, 'Belo Horizonte', 'Top Vendas BH'),
+    ('Super Deals', NULL, '55566677700', 'Curitiba', 'Super Curitiba'),
+    ('Mega Sales', '99988877700001', NULL, 'Porto Alegre', 'Mega POA'),
+    ('Comércio Rápido', NULL, '11122233301', 'Salvador', 'Rápido Salvador'),
+    ('Comércio Global', '55566677700002', NULL, 'Recife', 'Global Recife'),
+    ('Excelente Vendas', NULL, '98765432101', 'Fortaleza', 'Excelente Fortaleza'),
+    ('Venda Total', '99988877700002', NULL, 'Brasília', 'Total Brasília'),
+    ('Central Vendedora', NULL, '11122233302', 'Manaus', 'Central Manaus');
+	
+
